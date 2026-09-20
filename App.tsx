@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
+  Pressable,
   RefreshControl,
   SafeAreaView,
   StatusBar,
@@ -10,10 +11,10 @@ import {
   View,
 } from "react-native";
 
-const API = "https://api.themeparks.wiki/v1";
+import ParkSelector from "./src/ParkSelector";
+import { Park } from "./src/data/parks";
 
-// Magic Kingdom's ThemeParks.wiki entity ID
-const MAGIC_KINGDOM_ID = "75ea578a-adc8-4116-a54d-dccb60765ef9";
+const API = "https://api.themeparks.wiki/v1";
 
 type Attraction = {
   id: string;
@@ -28,6 +29,32 @@ type Attraction = {
 };
 
 export default function App() {
+  const [selectedPark, setSelectedPark] =
+    useState<Park | null>(null);
+
+  if (!selectedPark) {
+    return (
+      <ParkSelector
+        onSelectPark={setSelectedPark}
+      />
+    );
+  }
+
+  return (
+    <WaitTimes
+      park={selectedPark}
+      onBack={() => setSelectedPark(null)}
+    />
+  );
+}
+
+function WaitTimes({
+  park,
+  onBack,
+}: {
+  park: Park;
+  onBack: () => void;
+}) {
   const [rides, setRides] = useState<Attraction[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -39,26 +66,29 @@ export default function App() {
       setError(null);
 
       const response = await fetch(
-        `${API}/entity/${MAGIC_KINGDOM_ID}/live`
+        `${API}/entity/${park.id}/live`
       );
 
       if (!response.ok) {
-        throw new Error(`API returned ${response.status}`);
+        throw new Error(
+          `API returned ${response.status}`
+        );
       }
 
       const json = await response.json();
 
-      const attractions: Attraction[] = json.liveData
-        .filter(
-          (item: Attraction) =>
-            item.entityType === "ATTRACTION" &&
-            item.queue?.STANDBY?.waitTime != null
-        )
-        .sort(
-          (a: Attraction, b: Attraction) =>
-            (a.queue?.STANDBY?.waitTime ?? 0) -
-            (b.queue?.STANDBY?.waitTime ?? 0)
-        );
+      const attractions: Attraction[] =
+        json.liveData
+          .filter(
+            (item: Attraction) =>
+              item.entityType === "ATTRACTION" &&
+              item.queue?.STANDBY?.waitTime != null
+          )
+          .sort(
+            (a: Attraction, b: Attraction) =>
+              (a.queue?.STANDBY?.waitTime ?? 0) -
+              (b.queue?.STANDBY?.waitTime ?? 0)
+          );
 
       setRides(attractions);
       setUpdated(new Date());
@@ -78,7 +108,7 @@ export default function App() {
 
   useEffect(() => {
     loadWaitTimes();
-  }, []);
+  }, [park.id]);
 
   function refresh() {
     setRefreshing(true);
@@ -90,7 +120,9 @@ export default function App() {
       <SafeAreaView style={styles.loading}>
         <StatusBar barStyle="light-content" />
 
-        <Text style={styles.logo}>RIDE RADAR</Text>
+        <Text style={styles.logo}>
+          RIDE RADAR
+        </Text>
 
         <ActivityIndicator
           size="large"
@@ -98,7 +130,7 @@ export default function App() {
         />
 
         <Text style={styles.loadingText}>
-          Scanning Magic Kingdom...
+          Scanning {park.name}...
         </Text>
       </SafeAreaView>
     );
@@ -109,10 +141,21 @@ export default function App() {
       <StatusBar barStyle="light-content" />
 
       <View style={styles.header}>
-        <Text style={styles.logo}>RIDE RADAR</Text>
+        <Pressable
+          onPress={onBack}
+          style={styles.backButton}
+        >
+          <Text style={styles.back}>
+            ‹ Parks
+          </Text>
+        </Pressable>
+
+        <Text style={styles.logo}>
+          RIDE RADAR
+        </Text>
 
         <Text style={styles.park}>
-          🏰 Magic Kingdom
+          {park.emoji} {park.name}
         </Text>
 
         {updated && (
@@ -134,10 +177,6 @@ export default function App() {
 
           <Text style={styles.errorText}>
             {error}
-          </Text>
-
-          <Text style={styles.errorHint}>
-            Pull down to try again.
           </Text>
         </View>
       ) : (
@@ -231,8 +270,19 @@ const styles = StyleSheet.create({
 
   header: {
     paddingHorizontal: 22,
-    paddingTop: 22,
+    paddingTop: 12,
     paddingBottom: 15,
+  },
+
+  backButton: {
+    alignSelf: "flex-start",
+    paddingVertical: 8,
+  },
+
+  back: {
+    color: "#57D7FF",
+    fontSize: 17,
+    fontWeight: "700",
   },
 
   logo: {
@@ -345,11 +395,6 @@ const styles = StyleSheet.create({
 
   errorText: {
     color: "#FF8B8B",
-    marginTop: 8,
-  },
-
-  errorHint: {
-    color: "#8EA1B8",
     marginTop: 8,
   },
 
