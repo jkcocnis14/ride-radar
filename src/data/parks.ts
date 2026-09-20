@@ -19,7 +19,7 @@ export const parks: Park[] = [
     description: "World Discovery & World Showcase",
   },
   {
-    id: "35109d5d-2f7c-4a5c-bbb6-72fdb9a8aaf7",
+    id: "288747d1-8b4f-4a64-867e-ea7c9b27bad8",
     name: "Hollywood Studios",
     emoji: "🎬",
     description: "Movies, adventure & a galaxy far away",

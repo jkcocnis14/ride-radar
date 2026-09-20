@@ -13,7 +13,9 @@ import {
 
 import ParkSelector from "./src/ParkSelector";
 import { Park } from "./src/data/parks";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
+import FavouriteButton from "./src/FavouriteButton";
 const API = "https://api.themeparks.wiki/v1";
 
 type Attraction = {
@@ -31,7 +33,49 @@ type Attraction = {
 export default function App() {
   const [selectedPark, setSelectedPark] =
     useState<Park | null>(null);
+    const [favourites, setFavourites] =
+  useState<string[]>([]);
 
+useEffect(() => {
+  loadFavourites();
+}, []);
+
+async function loadFavourites() {
+  try {
+    const saved =
+      await AsyncStorage.getItem(
+        "ride-radar-favourites"
+      );
+
+    if (saved) {
+      setFavourites(JSON.parse(saved));
+    }
+  } catch (error) {
+    console.error(
+      "Couldn't load favourites:",
+      error
+    );
+  }
+}
+
+async function toggleFavourite(
+  attractionId: string
+) {
+  const updated = favourites.includes(
+    attractionId
+  )
+    ? favourites.filter(
+        (id) => id !== attractionId
+      )
+    : [...favourites, attractionId];
+
+  setFavourites(updated);
+
+  await AsyncStorage.setItem(
+    "ride-radar-favourites",
+    JSON.stringify(updated)
+  );
+}
   if (!selectedPark) {
     return (
       <ParkSelector
@@ -42,18 +86,26 @@ export default function App() {
 
   return (
     <WaitTimes
-      park={selectedPark}
-      onBack={() => setSelectedPark(null)}
-    />
+  park={selectedPark}
+  onBack={() => setSelectedPark(null)}
+  favourites={favourites}
+  onToggleFavourite={toggleFavourite}
+/>
   );
 }
 
 function WaitTimes({
   park,
   onBack,
+  favourites,
+  onToggleFavourite,
 }: {
   park: Park;
   onBack: () => void;
+  favourites: string[];
+  onToggleFavourite: (
+    attractionId: string
+  ) => void;
 }) {
   const [rides, setRides] = useState<Attraction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -225,7 +277,12 @@ function WaitTimes({
                       : `● ${item.status ?? "Unknown"}`}
                   </Text>
                 </View>
-
+                 <FavouriteButton
+  favourite={favourites.includes(item.id)}
+  onPress={() =>
+    onToggleFavourite(item.id)
+  }
+/>
                 <View style={styles.wait}>
                   <Text style={styles.waitNumber}>
                     {wait}
