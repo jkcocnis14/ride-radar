@@ -12,10 +12,12 @@ import { Park, parks } from "./data/parks";
 
 type Props = {
   onSelectPark: (park: Park) => void;
+  onMyRides: () => void;
 };
 
 export default function ParkSelector({
   onSelectPark,
+  onMyRides,
 }: Props) {
   return (
     <SafeAreaView style={styles.container}>
@@ -61,7 +63,14 @@ export default function ParkSelector({
           </Pressable>
         ))}
       </View>
-
+    <Pressable
+  style={styles.myRidesButton}
+  onPress={onMyRides}
+>
+  <Text style={styles.myRidesText}>
+    ★  My Rides
+  </Text>
+</Pressable>
       <View style={styles.footer}>
         <Text style={styles.footerText}>
           Live park data powered by ThemeParks.wiki
@@ -163,4 +172,19 @@ const styles = StyleSheet.create({
     color: "#536A83",
     fontSize: 11,
   },
+    myRidesButton: {
+  backgroundColor: "#102238",
+  borderColor: "#57D7FF",
+  borderWidth: 1,
+  borderRadius: 14,
+  paddingVertical: 16,
+  alignItems: "center",
+  marginTop: 20,
+},
+
+myRidesText: {
+  color: "#57D7FF",
+  fontSize: 17,
+  fontWeight: "700",
+},
 });

@@ -14,6 +14,7 @@ import {
 import ParkSelector from "./src/ParkSelector";
 import { Park } from "./src/data/parks";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import MyRides from "./src/MyRides";
 
 import FavouriteButton from "./src/FavouriteButton";
 const API = "https://api.themeparks.wiki/v1";
@@ -33,6 +34,8 @@ type Attraction = {
 export default function App() {
   const [selectedPark, setSelectedPark] =
     useState<Park | null>(null);
+    const [showMyRides, setShowMyRides] =
+  useState(false);
     const [favourites, setFavourites] =
   useState<string[]>([]);
 
@@ -76,11 +79,20 @@ async function toggleFavourite(
     JSON.stringify(updated)
   );
 }
+    if (showMyRides) {
+  return (
+    <MyRides
+  favourites={favourites}
+  onBack={() => setShowMyRides(false)}
+/>
+  );
+}
   if (!selectedPark) {
     return (
       <ParkSelector
-        onSelectPark={setSelectedPark}
-      />
+  onSelectPark={setSelectedPark}
+  onMyRides={() => setShowMyRides(true)}
+/>
     );
   }
 
